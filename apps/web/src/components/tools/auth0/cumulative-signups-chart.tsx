@@ -80,7 +80,8 @@ export function Auth0CumulativeSignups(params: {
         // stack: 'Total',
         smooth: true,
         lineStyle: {
-          width: 0
+          width: 2,
+          color: 'rgb(138 98 235)'
         },
         showSymbol: false,
         areaStyle: {
@@ -88,11 +89,15 @@ export function Auth0CumulativeSignups(params: {
           color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
             {
               offset: 0,
-              color: 'rgb(128, 255, 165)'
+              color: 'rgb(138, 98, 235, 0.7)'
+            },
+            {
+              offset: 0.5,
+              color: 'rgba(138, 98, 235, 0.3)'
             },
             {
               offset: 1,
-              color: 'rgb(1, 191, 236)'
+              color: 'rgba(138, 98, 235, 0)'
             }
           ]),
           // shadowOffsetX: 0,
@@ -132,7 +137,7 @@ export function Auth0CumulativeSignups(params: {
         emphasis: {
           focus: 'series',
           lineStyle: {
-            width: 10
+            width: 20
           }
         },
         data: data?.map((item: any) => item.new_users) ?? []
