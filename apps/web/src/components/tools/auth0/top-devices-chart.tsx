@@ -32,8 +32,8 @@ export function Auth0TopDevices(params: {
         renderBarContent: ({ label }) => {
           const Icon = icons[label as keyof typeof icons] || Laptop
           return (
-            <span className="font-bold text-black flex items-center gap-2">
-              <Icon size={16} className={label === 'Mobile (iOS)' ? 'stroke-[36] stroke-black fill-white' : ''} />
+            <span className="font-bold text-gray-500 flex items-center gap-2">
+              <Icon size={16} className={label === 'Mobile (iOS)' ? 'stroke-[36] stroke-gray-500 fill-white' : ''} />
               {label}
             </span>
           )
