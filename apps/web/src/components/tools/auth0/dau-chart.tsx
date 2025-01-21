@@ -21,36 +21,32 @@ export function Auth0Dau(params: {
     height="200px"
     params={params}
     stacked={true}
-    // colorPalette={['#2563eb']}
+    colorPalette={['#a2a2a2']}
     options={{
-      legend: {
-        data: ['Active Users']
-      },
       toolbox: {
         feature: {
           saveAsImage: {},
           magicType: {
-            type: ['line', 'bar', 'stack']
+            type: ['line', 'bar']
           }
         }
       },
       tooltip: {
         trigger: 'axis',
-        backgroundColor: 'rgba(0, 0, 0, 0.85)',
-        textStyle: {
-          color: '#fff',
-          fontSize: 12
+        axisPointer: {
+          type: 'cross',
+          label: {
+            backgroundColor: '#6a7985',
+          }
         },
-        borderRadius: 0,
-        padding: [8, 12],
         formatter: (parameters: any) => {
           const data = parameters[0];
           if (params.time_range === 'daily') {
-            return `${format(data.value[0], 'MMM dd, yyyy')}: ${data.value[1].toLocaleString()} active users`;
+            return `${format(data.value[0], 'MMM dd, yyyy')}\n${data.value[1].toLocaleString()} active users`;
           } else if (params.time_range === 'hourly') {
-            return `${format(data.value[0], 'MMM dd, yyyy HH:mm')}: ${data.value[1].toLocaleString()} active users`;
+            return `${format(data.value[0], 'MMM dd, yyyy HH:mm')}\n${data.value[1].toLocaleString()} active users`;
           }
-          return `${format(data.value[0], 'MMM yyyy')}: ${data.value[1].toLocaleString()} active users`;
+          return `${format(data.value[0], 'MMM yyyy')}\n${data.value[1].toLocaleString()} active users`;
         }
       },
       grid: {
@@ -70,14 +66,32 @@ export function Auth0Dau(params: {
         axisLabel: {
           color: '#64748b',
           fontSize: 12,
-          formatter: (value: number) => {
-            if (params.time_range === 'daily') {
-              return format(new Date(value), 'MMM dd, yyyy');
-            } else if (params.time_range === 'hourly') {
-              return format(new Date(value), 'MMM dd, yyyy HH:mm');
-            }
-            return format(new Date(value), 'MMM yyyy');
-          }
+          formatter: (function() {
+            let prevMonth = '';
+            let prevMonthMonth = '';
+            let index = 0;
+            return (value: number) => {
+              const date = new Date(value);
+              if (params.time_range === 'daily') {
+                const month = format(date, 'MMM');
+                const day = format(date, 'dd');
+                if (month !== prevMonth) {
+                  prevMonth = month;
+                  return `${month} ${day}`;
+                }
+                return day;
+              } else if (params.time_range === 'hourly') {
+                return format(date, 'MMM dd, HH:mm');
+              } 
+              const month = format(date, 'MMM');
+              if (month !== prevMonthMonth && index !== 0) {
+                prevMonthMonth = month;
+                return month;
+              }
+              index++;
+              return '';
+            };
+          })()
         },
         splitLine: {
           show: true,
