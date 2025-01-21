@@ -38,7 +38,7 @@ export function Auth0TopBrowsers(params: {
         label: <span className="font-bold normal-case">Browser</span>,
         renderBarContent: ({ label }) => {
           return (
-            <span className="font-bold text-black flex items-center gap-2">
+            <span className="font-bold text-gray-500 flex items-center gap-2">
               <img src={icons[label as keyof typeof icons] || icons['Other']} width="16" height="16" alt="" /> {label}
             </span>
           )
