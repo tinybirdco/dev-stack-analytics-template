@@ -28,7 +28,7 @@ export function Auth0TopDevices(params: {
     height="250px"
     params={params}
     indexConfig={{
-        label: 'DEVICE',
+        label: <span className="font-bold normal-case">Device</span>,
         renderBarContent: ({ label }) => {
           const Icon = icons[label as keyof typeof icons] || Laptop
           return (
@@ -41,7 +41,10 @@ export function Auth0TopDevices(params: {
     }}
     categoryConfig={{
         request_count: {
-            label: <span className="font-normal normal-case text-xs">Requests</span>
+            label: <span className="font-normal normal-case text-xs">Requests</span>,
+            renderValue: ({ value }) => {
+              return <span className="font-bold text-black">{value}</span>
+            }
         }
     }}
   />
