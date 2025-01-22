@@ -11,6 +11,13 @@ import { VercelDeploymentDuration } from './deployment-duration-ts'
 import { VercelDeploymentsOverTime } from './deployments-over-time'
 import { GitAnalytics } from './git-analytics'
 import { VercelProjects } from './project-stats'
+import { pipe } from '@/lib/tinybird'
+
+interface VercelMetrics {
+    total_deployments: number
+    success_rate: number
+    error_rate: number
+}
 
 export default function VercelDashboard() {
     const [token] = useQueryState('token')
@@ -19,6 +26,7 @@ export default function VercelDashboard() {
         from: addDays(new Date(), -7),
         to: new Date()
     })
+    const [metrics, setMetrics] = useState<VercelMetrics>()
 
     const [, setIsLoading] = useState(true)
 
@@ -26,8 +34,20 @@ export default function VercelDashboard() {
         async function fetchData() {
             if (!token) return
 
+            const params = {
+                time_range: timeRange,
+                ...(dateRange?.from && { date_from: format(dateRange.from, 'yyyy-MM-dd HH:mm:ss') }),
+                ...(dateRange?.to && { date_to: format(dateRange.to, 'yyyy-MM-dd 23:59:59') })
+            }
+
             try {
                 setIsLoading(true)
+                const [
+                    metricsResult,
+                ] = await Promise.all([
+                    pipe<{ data: VercelMetrics[] }>(token, 'vercel_deployment_metrics', params),
+                ])
+                setMetrics(metricsResult?.data?.[0])
             } catch (error) {
                 console.error('Failed to fetch data:', error)
             } finally {
@@ -51,22 +71,18 @@ export default function VercelDashboard() {
             </div>
 
             {/* Metrics Row */}
-            <div className="grid gap-4 md:grid-cols-4">
+            <div className="grid gap-4 md:grid-cols-3">
                 <MetricCard
                     title="Total Deployments"
-                    value={'N/A'}
+                    value={metrics?.total_deployments ?? 'N/A'}
                 />
                 <MetricCard
                     title="Success Rate"
-                    value={'N/A'}
-                />
-                <MetricCard
-                    title="Average Deploy Time"
-                    value={'N/A'}
+                    value={metrics?.success_rate ?? 'N/A'}
                 />
                 <MetricCard
                     title="Error Rate"
-                    value={'N/A'}
+                    value={metrics?.error_rate ?? 'N/A'}
                 />
             </div>
 
