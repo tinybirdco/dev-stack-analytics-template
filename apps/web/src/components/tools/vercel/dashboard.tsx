@@ -9,6 +9,8 @@ import { TimeRange, type TimeRange as TR } from '@/components/time-range'
 import MetricCard from '@/components/metric-card'
 import { VercelDeploymentDuration } from './deployment-duration-ts'
 import { VercelDeploymentsOverTime } from './deployments-over-time'
+import { GitAnalytics } from './git-analytics'
+import { VercelProjects } from './project-stats'
 
 export default function VercelDashboard() {
     const [token] = useQueryState('token')
@@ -38,13 +40,15 @@ export default function VercelDashboard() {
 
     return (
         <div className="space-y-8">
-            <TimeRange
-                timeRange={timeRange}
-                onTimeRangeChange={setTimeRange}
-                dateRange={dateRange}
-                onDateRangeChange={(range) => setDateRange(range || { from: addDays(new Date(), -7), to: new Date() })}
-                className="mb-8"
-            />
+            <div className="flex gap-2">
+                <TimeRange
+                    timeRange={timeRange}
+                    onTimeRangeChange={setTimeRange}
+                    dateRange={dateRange}
+                    onDateRangeChange={(range) => setDateRange(range || { from: addDays(new Date(), -7), to: new Date() })}
+                    className="mb-8"
+                />
+            </div>
 
             {/* Metrics Row */}
             <div className="grid gap-4 md:grid-cols-4">
@@ -104,6 +108,10 @@ export default function VercelDashboard() {
                     </CardHeader>
                     <CardContent>
                         {/* Top Projects table */}
+                        <VercelProjects
+                            date_from={dateRange.from ? format(dateRange.from, 'yyyy-MM-dd HH:mm:ss') : undefined}
+                            date_to={dateRange.to ? format(dateRange.to, 'yyyy-MM-dd HH:mm:ss') : undefined}
+                        />
                     </CardContent>
                 </Card>
 
@@ -113,6 +121,10 @@ export default function VercelDashboard() {
                     </CardHeader>
                     <CardContent>
                         {/* Git Analytics chart */}
+                        <GitAnalytics
+                            date_from={dateRange.from ? format(dateRange.from, 'yyyy-MM-dd HH:mm:ss') : undefined}
+                            date_to={dateRange.to ? format(dateRange.to, 'yyyy-MM-dd HH:mm:ss') : undefined}
+                        />
                     </CardContent>
                 </Card>
             </div>
