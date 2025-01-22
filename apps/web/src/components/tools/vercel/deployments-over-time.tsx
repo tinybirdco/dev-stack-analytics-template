@@ -16,7 +16,6 @@ export function VercelDeploymentsOverTime(params: {
       colorPalette={['#27F795', '#008060', '#0EB1B9', '#9263AF', '#5A6FC0', '#86BFDB', '#FFC145', '#FF6B6C', '#DC82C8', '#FFC0F1']}
       stacked={true}
       groupBy="event_type"
-      title="Vercel Deployments Over Time"
       height="500px"
       params={params}
     />
