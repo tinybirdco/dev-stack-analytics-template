@@ -4,18 +4,23 @@ TAGS "vercel"
 NODE git_analytics
 SQL >
     %
-    SELECT 
-        coalesce(event.payload.deployment.meta.githubCommitAuthorName::String, event.payload.deployment.meta.gitlabCommitAuthorName::String) as author,
-        count() as commits,
-        any(event.payload.deployment.meta.githubRepo::String) as github_repo,
-        any(event.payload.deployment.meta.gitlabProjectRepo::String) as gitlab_repo,
-        any(event.payload.deployment.meta.githubCommitRef::String) as branch
+    SELECT
+        coalesce(
+            nullIf(event.payload.deployment.meta.githubCommitAuthorName::String, ''),
+            coalesce(
+                nullIf(event.payload.deployment.meta.gitlabCommitAuthorLogin::String, ''),
+                nullIf(event.payload.deployment.meta.gitlabCommitAuthorName::String, '')
+            ),
+            'user_not_found'
+        ) as author,
+        count() as commits
     FROM vercel
-    WHERE event_type = 'deployment.created'
-    AND event_time >= {{DateTime(date_from, '2024-01-01 00:00:00')}}
-    AND event_time <= {{DateTime(date_to, '2024-12-31 23:59:59')}}
-    AND author != ''
+    WHERE
+        event_type = 'deployment.created'
+        AND event_time >= {{ DateTime(date_from, '2024-01-01 00:00:00') }}
+        AND event_time <= {{ DateTime(date_to, '2024-12-31 23:59:59') }}
     GROUP BY author
     ORDER BY commits DESC
+    LIMIT 10
 
 TYPE ENDPOINT

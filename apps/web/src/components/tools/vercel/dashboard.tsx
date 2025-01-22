@@ -4,14 +4,14 @@ import { useQueryState } from 'nuqs'
 import { useEffect, useState } from 'react'
 import { addDays, format } from 'date-fns'
 import { DateRange } from 'react-day-picker'
-import { pipe } from '@/lib/tinybird'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { TimeRange, type TimeRange as TR } from '@/components/time-range'
 import MetricCard from '@/components/metric-card'
-import { DeploymentsChart, DeploymentsData } from './deployments-chart'
-import { DurationChart, DurationData } from './duration-chart'
-import { ProjectsChart, ProjectData } from './projects-chart'
-import { GitAnalyticsChart, GitData } from './git-analytics-chart'
+import { VercelDeploymentDuration } from './deployment-duration-ts'
+import { VercelDeploymentsOverTime } from './deployments-over-time'
+import { GitAnalytics } from './git-analytics'
+import { VercelProjects } from './project-stats'
+import { pipe } from '@/lib/tinybird'
 
 interface VercelMetrics {
     total_deployments: number
@@ -26,13 +26,9 @@ export default function VercelDashboard() {
         from: addDays(new Date(), -7),
         to: new Date()
     })
+    const [metrics, setMetrics] = useState<VercelMetrics>()
 
     const [, setIsLoading] = useState(true)
-    const [metrics, setMetrics] = useState<VercelMetrics>()
-    const [deploymentsData, setDeploymentsData] = useState<DeploymentsData[]>([])
-    const [durationData, setDurationData] = useState<DurationData[]>([])
-    const [projectsData, setProjectsData] = useState<ProjectData[]>([])
-    const [gitData, setGitData] = useState<GitData[]>([])
 
     useEffect(() => {
         async function fetchData() {
@@ -48,24 +44,10 @@ export default function VercelDashboard() {
                 setIsLoading(true)
                 const [
                     metricsResult,
-                    deploymentsResult,
-                    durationResult,
-                    projectsResult,
-                    gitAnalyticsResult,
-
                 ] = await Promise.all([
                     pipe<{ data: VercelMetrics[] }>(token, 'vercel_deployment_metrics', params),
-                    pipe<{ data: DeploymentsData[] }>(token, 'vercel_deployments_over_time', params),
-                    pipe<{ data: DurationData[] }>(token, 'vercel_deployment_duration', params),
-                    pipe<{ data: ProjectData[] }>(token, 'vercel_project_stats', params),
-                    pipe<{ data: GitData[] }>(token, 'vercel_git_analytics', params)
                 ])
-
                 setMetrics(metricsResult?.data?.[0])
-                setDeploymentsData(deploymentsResult?.data ?? [])
-                setDurationData(durationResult?.data ?? [])
-                setProjectsData(projectsResult?.data ?? [])
-                setGitData(gitAnalyticsResult?.data ?? [])
             } catch (error) {
                 console.error('Failed to fetch data:', error)
             } finally {
@@ -78,31 +60,29 @@ export default function VercelDashboard() {
 
     return (
         <div className="space-y-8">
-            <TimeRange
-                timeRange={timeRange}
-                onTimeRangeChange={setTimeRange}
-                dateRange={dateRange}
-                onDateRangeChange={(range) => setDateRange(range || { from: addDays(new Date(), -7), to: new Date() })}
-                className="mb-8"
-            />
+            <div className="flex gap-2">
+                <TimeRange
+                    timeRange={timeRange}
+                    onTimeRangeChange={setTimeRange}
+                    dateRange={dateRange}
+                    onDateRangeChange={(range) => setDateRange(range || { from: addDays(new Date(), -7), to: new Date() })}
+                    className="mb-8"
+                />
+            </div>
 
             {/* Metrics Row */}
-            <div className="grid gap-4 md:grid-cols-4">
+            <div className="grid gap-4 md:grid-cols-3">
                 <MetricCard
                     title="Total Deployments"
                     value={metrics?.total_deployments ?? 'N/A'}
                 />
                 <MetricCard
                     title="Success Rate"
-                    value={metrics?.success_rate ? `${metrics.success_rate}%` : 'N/A'}
-                />
-                <MetricCard
-                    title="Average Deploy Time"
-                    value={durationData.length > 0 ? `${Math.round(durationData.reduce((acc, curr) => acc + curr.avg_duration, 0) / durationData.length)}s` : 'N/A'}
+                    value={metrics?.success_rate ?? 'N/A'}
                 />
                 <MetricCard
                     title="Error Rate"
-                    value={metrics?.error_rate ? `${metrics.error_rate}%` : 'N/A'}
+                    value={metrics?.error_rate ?? 'N/A'}
                 />
             </div>
 
@@ -113,9 +93,11 @@ export default function VercelDashboard() {
                         <CardTitle>Deployments Over Time</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <DeploymentsChart
-                            data={deploymentsData}
-                            timeRange={timeRange}
+                        {/* Deployments Over Time chart */}
+                        <VercelDeploymentsOverTime
+                            time_range={timeRange}
+                            date_from={dateRange.from ? format(dateRange.from, 'yyyy-MM-dd HH:mm:ss') : undefined}
+                            date_to={dateRange.to ? format(dateRange.to, 'yyyy-MM-dd HH:mm:ss') : undefined}
                         />
                     </CardContent>
                 </Card>
@@ -125,22 +107,26 @@ export default function VercelDashboard() {
                         <CardTitle>Deploy Duration</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <DurationChart
-                            data={durationData}
-                            timeRange={timeRange} />
+                        {/* Deploy Duration chart */}
+                        <VercelDeploymentDuration
+                            time_range={timeRange}
+                            date_from={dateRange.from ? format(dateRange.from, 'yyyy-MM-dd HH:mm:ss') : undefined}
+                            date_to={dateRange.to ? format(dateRange.to, 'yyyy-MM-dd HH:mm:ss') : undefined}
+                        />
                     </CardContent>
                 </Card>
             </div>
 
-            {/* Tables and Additional Charts */}
             <div className="grid gap-4 md:grid-cols-2">
                 <Card>
                     <CardHeader>
                         <CardTitle>Top Projects</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <ProjectsChart
-                            data={projectsData}
+                        {/* Top Projects table */}
+                        <VercelProjects
+                            date_from={dateRange.from ? format(dateRange.from, 'yyyy-MM-dd HH:mm:ss') : undefined}
+                            date_to={dateRange.to ? format(dateRange.to, 'yyyy-MM-dd HH:mm:ss') : undefined}
                         />
                     </CardContent>
                 </Card>
@@ -150,8 +136,10 @@ export default function VercelDashboard() {
                         <CardTitle>Git Analytics</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <GitAnalyticsChart
-                            data={gitData}
+                        {/* Git Analytics chart */}
+                        <GitAnalytics
+                            date_from={dateRange.from ? format(dateRange.from, 'yyyy-MM-dd HH:mm:ss') : undefined}
+                            date_to={dateRange.to ? format(dateRange.to, 'yyyy-MM-dd HH:mm:ss') : undefined}
                         />
                     </CardContent>
                 </Card>
