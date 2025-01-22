@@ -5,4 +5,4 @@
 .tmp
 .tb_error*
 tinybird/fixtures
-
+tinybird/tests

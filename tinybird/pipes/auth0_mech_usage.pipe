@@ -21,5 +21,6 @@ SQL >
     {% end %}
     group by mech
     order by logins desc
+    limit 5
 
 TYPE ENDPOINT
